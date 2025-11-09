@@ -1,0 +1,41 @@
+1.1 Setting Up the Basic Environment
+
+(1) Install Xcode Command Line Tools, which is a foundational dependency for many tools. The command is as follows: xcode-select --install
+
+(2) Install Homebrew, which is a powerful package manager for macOS. Visit https://brew.sh/ to get the installation command.
+
+(3) Install the Conda Environment
+
+Download Miniforge3-MacOSX-arm64.sh to the directory, run the installation script Miniforge3-MacOSX-arm64.sh, activate with conda activate, and activate the configuration with source ~/.zshrc.
+
+2. R Environment Setup:
+
+2.1 Installing R and RStudio
+
+(1) Visit the CRAN mirror website: https://cran.r-project.org/, select the latest .pkg installation package, download and install it.
+
+(2) Visit the RStudio official website: https://www.rstudio.com/products/rstudio/download/, select "Download RStudio Desktop", download and install it.
+
+2.2 Installing R Packages
+
+(1) Install from CRAN: install.packages("xxx")
+
+(2) Install from Bioconductor.
+
+Modify the mirror:
+
+# Use Tsinghua University's mirror
+
+options(BioC_mirror="https://mirrors.tuna.tsinghua.edu.cn/bioconductor")
+
+# Install the BiocManager package
+
+if (!require("BiocManager", quietly = TRUE))
+
+    install.packages("BiocManager")
+
+BiocManager::install(version = "3.21") # This version may change; refer to the official website.
+
+# Install R package
+
+BiocManager::install("xxx")
