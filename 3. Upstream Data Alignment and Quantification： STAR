@@ -1,0 +1,62 @@
+3.1 STAR Mapping
+
+3.1.1 Download Reference Genome and Annotation Files
+
+https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/
+
+Reference Genome (FASTA Format): GCF_000001405.40_GRCh38.p14_genomic.fna.gz
+
+Gene Annotation File (GTF Format): GCF_000001405.40_GRCh38.p14_genomic.gtf.gz
+
+3.1.2 Build Genome Index for STAR
+
+STAR \
+  --runThreadN 8 \
+  --runMode genomeGenerate \
+  --genomeDir ref_genome/GRCh38.NCBI/GRCh38.satr.index \
+  --genomeFastaFiles ref_genome/GRCh38.NCBI/GRCh38.p14.fna \
+  --sjdbGTFfile ref_genome/GRCh38.NCBI/GRCh38.p14.gtf \
+  --sjdbOverhang 149 \
+  --limitGenomeGenerateRAM 32000000000
+
+3.1.3 Align Reads to Reference Genome (STAR)
+
+STAR.GRCh38.NCBI.sh
+
+#Genome=GRCh38.NCBI
+
+Genomedir=/Users/lixia/Data/database/ref_genome/GRCh38.NCBI/GRCh38.satr.index
+
+cd /Users/lixia/Data/data/TAS_seq/fastq
+
+sample="HEK293T.Ctl.Rep1 HEK293T.Ctl.Rep2 HEK293T.NES.Rep1 HEK293T.NES.Rep2"
+
+for s in $sample
+
+do
+
+STAR \
+
+--runThreadN 8 \
+
+--outFilterMultimapNmax 20 \
+
+--outFileNamePrefix ./STAR/$s.STAR \
+
+--genomeDir $Genomedir/ \
+
+--outSAMtype BAM Unsorted \
+
+--readFilesCommand gzcat \
+
+--readFilesIn $s.1.fastq.gz $s.2.fastq.gz \
+
+--alignEndsType EndToEnd \
+
+--outReadsUnmapped Fastx 2 \
+
+--outSAMstrandField intronMotif \
+
+--outFilterMismatchNmax 20
+
+Done
