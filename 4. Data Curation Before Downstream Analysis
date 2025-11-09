@@ -1,1 +1,4 @@
-Directly proceeding to differential analysis carries significant risks. Before conducting the analysis, several key aspects should be examined: the comparability of expression levels between samples, the presence of batch effects, the uniformity of gene coverage, and the existence of outlier samples.
+Directly proceeding to differential analysis carries significant risks. Before conducting the analysis, several key aspects should be examined: 
+the comparability of expression levels between samples, the presence of batch effects, the uniformity of gene coverage, and the existence of outlier samples.
+
+Please check the R script(s) starting with "Check_preparation" in the "Other-R-code" repository.
