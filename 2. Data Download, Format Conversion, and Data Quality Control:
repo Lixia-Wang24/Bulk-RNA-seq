@@ -1,0 +1,41 @@
+# Create the RNAexpdiff Environment
+mamba create -n RNAexpdiff python=3.10
+# Activate the New Environment
+conda activate RNAexpdiff
+# Install SRA Toolkit
+conda install sra-tools
+# Install Cutadapt
+conda install -c bioconda cutadapt
+# Install FastQC
+conda install -c bioconda fastqc -y
+# Install MultiQC
+conda install -c bioconda multiqc -y
+# Install GNU Parallel
+conda install -c conda-forge parallel
+
+2.1 SRA File Download: Write SRA Identifiers to the GEO.download.txt File, and Run the Following Command
+prefetch --option-file GEO.download.txt.
+2.2 Convert SRA Files to FASTQ Format
+fastq-dump --split-files --gzip -O $OUTPUT_DIR $s
+gzip *.fastq
+2.3 Raw Data Quality Assessment (FastQC)
+(1) Create the Conversion Script: vi fastQC_threads8.sh with the Following Content:
+# Use find to Search Subdirectories and parallel for Multi-Threading
+Input_dir="/Users/lixia/Data/data/TAS_seq/fastq"
+Out_fastQC_dir="/Users/lixia/data/data/TAS_seq/fastQC"
+mkdir -p "$Out_fastQC_dir"
+# Find All fastq.gz Files to Process
+find "$Input_dir" -name "*.fastq.gz" | \
+parallel -j 8 "fastqc {} -o $Out_fastQC_dir"
+(2) Check the Generated QC Reports; MultiQC Will Generate a Comprehensive Report for All QC Files
+2.4 Adapter Trimming and Quality Filtering (Cutadapt)
+(1) Run Cutadapt (This Command Consumes a Lot of Disk Space)
+Input_dir="/Users/lixia/Data/data/TAS_seq/fastq"
+Out_fastQC_dir="/Users/lixia/data/data/TAS_seq/cutadaptor"
+mkdir -p "$Out_fastQC_dir"
+sample="SRR30892944 SRR30892945 SRR30892946 SRR30892947"
+for s in $sample
+do
+cutadapt -n 1 -e 0.1 -O 2 -m 16 -a AGATCGGAAGAGCACACGTCT -A AGATCGGAAGAGCGTCGTGT -o $Out_fastQC_dir/$s.1.fastq.clipper.gz -p $Out_fastQC_dir/$s.2.fastq.clipper.gz $Input_dir/${s}_1.fastq.gz $Input_dir/${s}_2.fastq.gz > $Out_fastQC_dir/$s.clipper.log
+done
+(2) Check the Cutadapt Results
