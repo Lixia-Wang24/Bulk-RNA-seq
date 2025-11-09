@@ -1,0 +1,45 @@
+This script outlines the use of the featureCounts tool for quantifying gene expression levels across all processed BAM files.
+
+# Define the directory for the Genome Reference (GTF file)
+Genome_dir="/Users/lixia/Data/database/ref_genome/GRCh38.ENSEMBL"
+# Define the Genome Reference GTF file name
+Genome_ref="Homo_sapiens.GRCh38.84.gtf.gz"
+# Define the output directory for read counts
+Out_dir_Readsquan="/Users/lixia/Data/data/Fractionation_seq/featureCounts_labE"
+# Create the output directory if it doesn't exist
+mkdir -p "${Out_dir_Readsquan}"
+
+### Process all samples with a single command (no loop required) ###
+featureCounts\
+    -p \
+    --countReadPairs \
+    -T 8 \
+    -s 2 \
+    -g gene_id \
+    -t exon \
+    -a "${Genome_dir}/${Genome_ref}" \
+    -o "${Out_dir_Readsquan}/gene.counts.txt" \
+    *.uniq.nodup.bam
+# featureCounts Parameter Key:
+# -p: Input files are paired-end reads.
+# --countReadPairs: Fragments (read pairs) are counted, not individual reads.
+# -T 8: Use 8 threads/CPUs for counting.
+# -s 2: Specify reverse strandedness (2 or 'reverse' for second read of pair on sense strand).
+# -g gene_id: Group features by the 'gene_id' attribute in the GTF file.
+# -t exon: Features of type 'exon' are counted.
+# -a: The GTF or GFF annotation file.
+# -o: Output file path for the counts matrix.
+# *.uniq.nodup.bam: Input BAM files (uses wildcard to process all matched files).
+
+### Process single sample using a loop (Alternative method) ###
+# Note: The 's' variable is undefined in this block, assuming it would be defined in an outer loop.
+featureCounts\
+    -p \
+    --countReadPairs \
+    -T 8 \
+    -s 2 \
+    -a "${Genome_dir}/${Genome_ref}" \
+    -t exon \
+    -g gene_id \
+    -o "${Out_dir_Readsquan}/${s}.gene.counts.txt" \
+    "${s}.uniq.nodup.bam"
