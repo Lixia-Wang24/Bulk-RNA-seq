@@ -1,0 +1,50 @@
+3.2.1 Building the HISAT2 Genome Index (Using Genome + GTF)
+
+The following command builds the reference index required by HISAT2.
+
+# Syntax: hisat2-build <reference_fasta> <index_prefix>
+hisat2-build ../GRCh38.fa GRCh38_idx
+
+
+3.2.2 Mapping Reads to the Index
+
+This script iterates through the paired-end FASTQ files, maps them to the indexed genome using HISAT2, and performs real-time processing of the output (sorting and conversion to BAM, calculating flagstat).
+
+#!/bin/bash
+
+# Define the directory containing the HISAT2 genome index
+Genomedir=/Users/lixia/Data/database/ref_genome/GRCh38.NCBI/hisat2_idx/GRCh38_idx
+
+# Define the list of sample prefixes (assuming file names are like: Prefix.1.fastq.clippper.gz)
+sample="HEK293T.Ctl.Rep1 HEK293T.Ctl.Rep2 HEK293T.NES.Rep1 HEK293T.NES.Rep2"
+
+# Loop through each sample
+for s in $sample
+do
+    echo "--- Starting mapping for sample: $s ---"
+    
+    # HISAT2 command pipeline:
+    # 1. hisat2: Performs the alignment.
+    # 2. tee: Duplicates the SAM output stream.
+    # 3. samtools flagstat: Calculates alignment statistics from one stream and saves them.
+    # 4. samtools sort: Sorts the SAM output and converts it to BAM format.
+    # 5. tee: Duplicates the final sorted BAM stream to save the file.
+    hisat2 \
+        -x $Genomedir \
+        -k 2 \
+        -p 8 \
+        --rna-strandness RF \
+        --dta \
+        -1 $s.1.fastq.clippper.gz \
+        -2 $s.2.fastq.clippper.gz \
+        --no-unal \
+        --un-conc-gz $s.hisat2.un.gz \
+        --no-softclip \
+        --summary-file $s.hisat2.log \
+    | tee >(samtools flagstat - > $s.hisat2.flagstat) \
+    | samtools sort -O BAM \
+    | tee $s.hisat2.bam
+
+    echo "--- Finished mapping for sample: $s ---"
+    echo ""
+done
