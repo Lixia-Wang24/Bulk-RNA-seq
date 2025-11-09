@@ -1,0 +1,76 @@
+# The following block is disabled using multiline comments (:<<! ... !)
+:<<!
+## Samtools sort and index data after Picard deduplication ##
+sample="HEK293T.Ctl.Rep1 HEK293T.Ctl.Rep2 HEK293T.NES.Rep1 HEK293T.NES.Rep2"
+for s in $sample
+do
+#    # Sort the deduplicated BAM file
+#    samtools sort "$s".uniq.nodup.bam -o "$s".uniq.nodup.sorted.bam -@ 8
+#    # Index the sorted BAM file
+#    samtools index "$s".uniq.nodup.sorted.bam -@ 8
+done
+
+#### Perform Transcript Assembly and Quantification using StringTie ####
+#Ref_gtf="/Users/lixia/Data/database/ref_genome/GRCh38.GENCODE/gencode.v48.primary_assembly.annotation.gtf"
+# StringTie is compatible with ENSEMBL/GENCODE GTF formats; NCBI GTF may lack valid transcript_id leading to errors, requiring modification (e.g., GRCh38.fixed.s)
+Ref_gtf="/Users/lixia/Data/database/ref_genome/GRCh38.NCBI/GRCh38.filtered.gtf"
+sample="HEK293T.Ctl.Rep1 HEK293T.Ctl.Rep2 HEK293T.NES.Rep1 HEK293T.NES.Rep2"
+for s in $sample
+do
+    # Step 1: Assembly and Quantification
+    stringtie "$s".uniq.nodup.sorted.bam \
+        -G "$Ref_gtf" \
+        -o "$s".assembled.gtf \
+        -p 8 \
+        --rf \
+        -A "$s".gene.abundance.tsv
+done
+
+# Create merge list
+ls *.assembled.gtf > mergelist.txt
+
+# Step Two: Merging
+Ref_gtf="/Users/lixia/Data/database/ref_genome/GRCh38.NCBI/GRCh38.filtered.gtf"
+stringtie --merge \
+    -G "$Ref_gtf" \
+    -o merged.transcripts.gtf \
+    -i \
+    -p 8 \
+    mergelist.txt
+
+# Step Three: Requantification (against the merged GTF)
+sample_parth="/Users/lixia/Data/data/TAS_seq/cutadaptor"
+sample="HEK293T.Ctl.Rep1 HEK293T.Ctl.Rep2 HEK293T.NES.Rep1 HEK293T.NES.Rep2"
+for s in $sample
+do
+    stringtie "$s".uniq.nodup.sorted.bam \
+        -G merged.transcripts.gtf \
+        -o "$s".quantified.gtf \
+        -p 8 \
+        --rf \
+        -A "$s".final_abundance.tsv \
+        -e
+done
+!
+
+### Next steps can proceed to Ballgown for differential gene expression analysis
+# When performing requantification (-e flag is used), the -B flag outputs Ballgown input files. 
+# A separate directory is required for each sample, otherwise, only the last sample's -B files will be retained.
+
+# Create ballgown input directory
+mkdir -p ballgown_input
+
+# Rerun StringTie, creating an independent directory for each sample with the -B flag
+sample="HEK293T.Ctl.Rep1 HEK293T.Ctl.Rep2 HEK293T.NES.Rep1 HEK293T.NES.Rep2"
+for s in $sample
+do
+    mkdir -p ballgown_input/$s
+    stringtie "$s".uniq.nodup.sorted.bam \
+        -G merged.transcripts.gtf \
+        -o ballgown_input/"$s"/"$s".quantified.gtf \
+        -p 8 \
+        --rf \
+        -A ballgown_input/"$s"/"$s".final_abundance.tab \
+        -e \
+        -B
+done
